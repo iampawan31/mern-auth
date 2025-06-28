@@ -132,7 +132,7 @@ export const logout = async (req, res) => {
   }
 }
 
-export const sendVerifyCode = async (req, res) => {
+export const sendVerificationCode = async (req, res) => {
   try {
     const { userId } = req.body
 
@@ -175,7 +175,8 @@ export const sendVerifyCode = async (req, res) => {
   }
 }
 
-export const verifyEmail = async (res, res) => {
+// Verify email using verification code
+export const verifyEmail = async (req, res) => {
   try {
     const { userId, verificationCode } = req.body
 
@@ -221,6 +222,133 @@ export const verifyEmail = async (res, res) => {
     return res.json({
       success: true,
       message: 'Email verified successfully!!'
+    })
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    })
+  }
+}
+
+// Check if user is authenticated
+export const isAuthenticated = async (req, res) => {
+  try {
+    return res.json({
+      success: true,
+      message: null
+    })
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    })
+  }
+}
+
+// Send Password reset verification code
+export const sendPasswordResetVerificationCode = async (req, res) => {
+  try {
+    const { email } = req.body
+
+    if (!email) {
+      return res.status(422).json({
+        success: false,
+        message: 'Email field is required!'
+      })
+    }
+
+    const user = await userModel.findOne({ email })
+
+    if (!user) {
+      return res.status(422).json({
+        success: false,
+        message: 'Email is not registered!'
+      })
+    }
+
+    const resetPasswordCode = String(
+      Math.floor(100000 + Math.random() * 900000)
+    )
+
+    user.resetPasswordCode = resetPasswordCode
+
+    // Verification Code expires in 20 Minutes
+    user.resetPasswordCodeExpiresAt = Date.now() + 20 * 60 * 1000
+    await user.save()
+
+    // Sending reset password email
+    const mailOptions = {
+      from: process.env.SENDER_MAIL,
+      to: user.email,
+      subject: 'Reset your password',
+      text: `Your reset password code is ${user.resetPasswordCode}. Reset your password using this code.`
+    }
+
+    await transporter.sendMail(mailOptions)
+
+    return res.json({
+      success: true,
+      message: 'Password reset code sent to your email!'
+    })
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    })
+  }
+}
+
+// Reset password using code
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, newPassword, resetPasswordCode } = req.body
+
+    if (!email || newPassword || resetPasswordCode) {
+      return res.status(422).json({
+        success: false,
+        message: 'Email/Password/Reset Code is required!'
+      })
+    }
+
+    const user = await userModel.findOne({ email })
+
+    if (!user) {
+      return res.status(422).json({
+        success: false,
+        message: 'Email is not registered!'
+      })
+    }
+
+    if (
+      user.resetPasswordCode === '' ||
+      user.resetPasswordCode !== resetPasswordCode
+    ) {
+      return res.status(422).json({
+        success: false,
+        message: 'Invalid Reset code!'
+      })
+    }
+
+    if (user.resetPasswordCodeExpiresAt < Date.now()) {
+      return res.status(422).json({
+        success: false,
+        message: 'Reset code is expired!'
+      })
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+    user.password = hashedPassword
+
+    user.resetPasswordCode = ''
+    user.resetPasswordCodeExpiresAt = ''
+
+    await user.save()
+
+    return res.json({
+      success: true,
+      message: 'Password updated successfully!'
     })
   } catch (error) {
     return res.status(500).json({
