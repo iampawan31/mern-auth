@@ -1,8 +1,9 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import userModel from '../models/userModel.js'
-import transporter from '../config/nodemailer.js'
+import userModel from '../models/userModel'
+import transporter from '../config/nodemailer'
 import { NextFunction, Request, Response } from 'express'
+import environmentConfig from '../config/environmentTokens'
 
 export const register = async (
   req: Request,
@@ -34,7 +35,7 @@ export const register = async (
 
     await user.save()
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
+    const token = jwt.sign({ id: user._id }, environmentConfig.jwtSecret, {
       expiresIn: '7d'
     })
 
@@ -47,7 +48,7 @@ export const register = async (
 
     // Sending welcome email
     const mailOptions = {
-      from: process.env.SENDER_MAIL,
+      from: environmentConfig.senderMail,
       to: user.email,
       subject: 'Welcome to MERN Auth',
       text: `Welcome to MERN Auth. Your account has been create with email id: ${user.email}`
@@ -96,7 +97,7 @@ export const login = async (
       })
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
+    const token = jwt.sign({ id: user._id }, environmentConfig.jwtSecret, {
       expiresIn: '7d'
     })
 
@@ -163,7 +164,7 @@ export const sendVerificationCode = async (
 
     // Sending welcome email
     const mailOptions = {
-      from: process.env.SENDER_MAIL,
+      from: environmentConfig.senderMail,
       to: user.email,
       subject: 'Verify your account',
       text: `Your verification code is ${user.verificationCode}. Verify your account using this code.`
@@ -290,7 +291,7 @@ export const sendPasswordResetVerificationCode = async (
 
     // Sending reset password email
     const mailOptions = {
-      from: process.env.SENDER_MAIL,
+      from: environmentConfig.senderMail,
       to: user.email,
       subject: 'Reset your password',
       text: `Your reset password code is ${user.resetPasswordCode}. Reset your password using this code.`

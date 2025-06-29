@@ -8,8 +8,8 @@ import {
   sendPasswordResetVerificationCode,
   sendVerificationCode,
   verifyEmail
-} from '../controllers/authController.js'
-import userAuth from '../middlewares/userAuth.js'
+} from '../controllers/authController'
+import userAuth from '../middlewares/userAuth'
 
 const authRouter = express.Router()
 

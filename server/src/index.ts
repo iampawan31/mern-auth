@@ -1,14 +1,13 @@
-import express, { Request, Response } from 'express'
-import 'express-async-errors'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import 'dotenv/config'
-import connectDB from './config/mongodb.ts'
-import { errorHandler } from './middlewares/errorHandler.ts'
-import authRouter from './routes/authRoutes.ts'
-import 'dotenv/config'
+import express, { Request, Response } from 'express'
+import 'express-async-errors'
+import connectDB from './config/mongodb'
+import { errorHandler } from './middlewares/errorHandler'
+import authRouter from './routes/authRoutes'
 
-import { loadAndValidateConfig } from './config/environmentTokens.ts'
+import { loadAndValidateConfig } from './config/environmentTokens'
 
 loadAndValidateConfig()
 

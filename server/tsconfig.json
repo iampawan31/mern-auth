@@ -5,12 +5,15 @@
     "target": "esnext",
     "esModuleInterop": true,
     "noEmit": true,
-    "module": "commonjs",
+    "module": "esnext",
+    "moduleResolution": "node",
     "outDir": "./dist",
     "rootDir": "./src",
     "skipLibCheck": true,
-    "strict": true
+    "strict": true,
+    "sourceMap": true,
+    "noEmitOnError": true
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts"], // Ensure all your source files are included
+  "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "exclude": ["node_modules"]
 }
