@@ -2,8 +2,13 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import userModel from '../models/userModel.js'
 import transporter from '../config/nodemailer.js'
+import { NextFunction, Request, Response } from 'express'
 
-export const register = async (req, res) => {
+export const register = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { name, email, password } = req.body
 
   if (!name || !email || !password) {
@@ -29,7 +34,7 @@ export const register = async (req, res) => {
 
     await user.save()
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
       expiresIn: '7d'
     })
 
@@ -54,14 +59,15 @@ export const register = async (req, res) => {
       success: true
     })
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    })
+    next(error)
   }
 }
 
-export const login = async (req, res) => {
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { email, password } = req.body
 
   if (!email || !password) {
@@ -90,7 +96,7 @@ export const login = async (req, res) => {
       })
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
       expiresIn: '7d'
     })
 
@@ -105,14 +111,15 @@ export const login = async (req, res) => {
       success: true
     })
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    })
+    next(error)
   }
 }
 
-export const logout = async (req, res) => {
+export const logout = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     res.clearCookie('token', {
       httpOnly: true,
@@ -125,14 +132,15 @@ export const logout = async (req, res) => {
       message: 'Logout successful!!'
     })
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    })
+    next(error)
   }
 }
 
-export const sendVerificationCode = async (req, res) => {
+export const sendVerificationCode = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { userId } = req.body
 
@@ -168,15 +176,16 @@ export const sendVerificationCode = async (req, res) => {
       message: 'Verification code sent successfully!!'
     })
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    })
+    next(error)
   }
 }
 
 // Verify email using verification code
-export const verifyEmail = async (req, res) => {
+export const verifyEmail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { userId, verificationCode } = req.body
 
@@ -224,30 +233,32 @@ export const verifyEmail = async (req, res) => {
       message: 'Email verified successfully!!'
     })
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    })
+    next(error)
   }
 }
 
 // Check if user is authenticated
-export const isAuthenticated = async (req, res) => {
+export const isAuthenticated = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     return res.json({
       success: true,
       message: null
     })
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    })
+    next(error)
   }
 }
 
 // Send Password reset verification code
-export const sendPasswordResetVerificationCode = async (req, res) => {
+export const sendPasswordResetVerificationCode = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { email } = req.body
 
@@ -292,15 +303,16 @@ export const sendPasswordResetVerificationCode = async (req, res) => {
       message: 'Password reset code sent to your email!'
     })
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    })
+    next(error)
   }
 }
 
 // Reset password using code
-export const resetPassword = async (req, res) => {
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { email, newPassword, resetPasswordCode } = req.body
 
@@ -351,9 +363,6 @@ export const resetPassword = async (req, res) => {
       message: 'Password updated successfully!'
     })
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    })
+    next(error)
   }
 }

@@ -1,6 +1,9 @@
 import jwt from 'jsonwebtoken'
+import { Request, Response, NextFunction } from 'express'
+import environmentConfig from '../config/environmentTokens'
+import { MyTokenPayload } from '../types/jwtPayload'
 
-const userAuth = async (req, res, next) => {
+const userAuth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { token } = req.cookies
 
@@ -11,7 +14,10 @@ const userAuth = async (req, res, next) => {
       })
     }
 
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
+    const decodedToken = jwt.verify(
+      token,
+      environmentConfig.jwtSecret
+    ) as MyTokenPayload
 
     if (decodedToken.id) {
       req.body.userId = decodedToken.id
@@ -24,10 +30,7 @@ const userAuth = async (req, res, next) => {
 
     next()
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    })
+    next(error)
   }
 }
 
