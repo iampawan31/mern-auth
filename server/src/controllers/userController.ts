@@ -1,7 +1,8 @@
-import { Request, Response, NextFunction } from 'express'
+import { NextFunction, Request, Response } from 'express'
+import { BadRequestError } from '../errors/BadRequestError'
 import userModel from '../models/userModel'
 
-export const getUserData = async (
+export const getUserProfile = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -12,18 +13,19 @@ export const getUserData = async (
     const user = await userModel.findById(userId)
 
     if (!user) {
-      return res.status()
+      return next(new BadRequestError('User not found!!'))
     }
 
     return res.json({
       success: true,
-      data: user,
+      data: {
+        name: user.name,
+        email: user.email,
+        isVerified: user.isVerified
+      },
       message: 'user data fetched successful!'
     })
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    })
+    next(error)
   }
 }

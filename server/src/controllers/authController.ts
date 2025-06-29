@@ -4,6 +4,9 @@ import userModel from '../models/userModel'
 import transporter from '../config/nodemailer'
 import { NextFunction, Request, Response } from 'express'
 import environmentConfig from '../config/environmentTokens'
+import environmentMailConfig from '../config/mailConfig'
+import { BadRequestError } from '../errors/BadRequestError'
+import { ValidationError } from '../errors/ValidationError'
 
 export const register = async (
   req: Request,
@@ -13,20 +16,14 @@ export const register = async (
   const { name, email, password } = req.body
 
   if (!name || !email || !password) {
-    return res.status(422).json({
-      success: false,
-      message: 'Missing input fields!!'
-    })
+    return next(new ValidationError())
   }
 
   try {
     const isExistingUser = await userModel.findOne({ email })
 
     if (isExistingUser) {
-      return res.status(422).json({
-        success: false,
-        message: 'Email already exists!!'
-      })
+      return next(new BadRequestError('Email already exists!!'))
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
@@ -48,7 +45,7 @@ export const register = async (
 
     // Sending welcome email
     const mailOptions = {
-      from: environmentConfig.senderMail,
+      from: environmentMailConfig.senderMail,
       to: user.email,
       subject: 'Welcome to MERN Auth',
       text: `Welcome to MERN Auth. Your account has been create with email id: ${user.email}`
@@ -72,29 +69,20 @@ export const login = async (
   const { email, password } = req.body
 
   if (!email || !password) {
-    return res.status(422).json({
-      success: false,
-      message: 'Email/Password is required!!'
-    })
+    return next(new ValidationError('Email/Password is required!!'))
   }
 
   try {
     const user = await userModel.findOne({ email })
 
     if (!user) {
-      return res.status(422).json({
-        success: false,
-        message: 'Email does not exist!!'
-      })
+      return next(new BadRequestError('Email does not exist!!'))
     }
 
     const matchPassword = bcrypt.compare(password, user.password)
 
     if (!matchPassword) {
-      return res.status(422).json({
-        success: false,
-        message: 'Email/Password does not match!!'
-      })
+      return next(new BadRequestError('Email/Password does not match!!'))
     }
 
     const token = jwt.sign({ id: user._id }, environmentConfig.jwtSecret, {
@@ -148,10 +136,7 @@ export const sendVerificationCode = async (
     const user = await userModel.findById(userId)
 
     if (user.isVerified) {
-      return res.status(500).json({
-        success: false,
-        message: 'User already verified!!'
-      })
+      return next(new BadRequestError('User already verified!!'))
     }
 
     const verificationCode = String(Math.floor(100000 + Math.random() * 900000))
@@ -164,7 +149,7 @@ export const sendVerificationCode = async (
 
     // Sending welcome email
     const mailOptions = {
-      from: environmentConfig.senderMail,
+      from: environmentMailConfig.senderMail,
       to: user.email,
       subject: 'Verify your account',
       text: `Your verification code is ${user.verificationCode}. Verify your account using this code.`
@@ -191,36 +176,24 @@ export const verifyEmail = async (
     const { userId, verificationCode } = req.body
 
     if (!userId || !verificationCode) {
-      return res.status(422).json({
-        success: false,
-        message: 'Details missing!!'
-      })
+      return next(new ValidationError())
     }
 
     const user = await userModel.findById(userId)
 
     if (!user) {
-      return res.status(500).json({
-        success: false,
-        message: 'User not found!!'
-      })
+      return next(new BadRequestError('User not found!!'))
     }
 
     if (
       user.verificationCode !== verificationCode ||
       user.verificationCode === ''
     ) {
-      return res.status(500).json({
-        success: false,
-        message: 'Invalid verification code!!'
-      })
+      return next(new BadRequestError('Invalid verification code!!'))
     }
 
     if (user.verificationCodeExpiresAt < Date.now()) {
-      return res.status(500).json({
-        success: false,
-        message: 'Verification code expired!!'
-      })
+      return next(new BadRequestError('Verification code expired!!'))
     }
 
     user.isVerified = true
@@ -264,19 +237,13 @@ export const sendPasswordResetVerificationCode = async (
     const { email } = req.body
 
     if (!email) {
-      return res.status(422).json({
-        success: false,
-        message: 'Email field is required!'
-      })
+      return next(new ValidationError('Email field is required!'))
     }
 
     const user = await userModel.findOne({ email })
 
     if (!user) {
-      return res.status(422).json({
-        success: false,
-        message: 'Email is not registered!'
-      })
+      return next(new BadRequestError('Email is not registered!'))
     }
 
     const resetPasswordCode = String(
@@ -291,7 +258,7 @@ export const sendPasswordResetVerificationCode = async (
 
     // Sending reset password email
     const mailOptions = {
-      from: environmentConfig.senderMail,
+      from: environmentMailConfig.senderMail,
       to: user.email,
       subject: 'Reset your password',
       text: `Your reset password code is ${user.resetPasswordCode}. Reset your password using this code.`
@@ -318,36 +285,24 @@ export const resetPassword = async (
     const { email, newPassword, resetPasswordCode } = req.body
 
     if (!email || newPassword || resetPasswordCode) {
-      return res.status(422).json({
-        success: false,
-        message: 'Email/Password/Reset Code is required!'
-      })
+      return next(new ValidationError('Email/Password/Reset Code is required!'))
     }
 
     const user = await userModel.findOne({ email })
 
     if (!user) {
-      return res.status(422).json({
-        success: false,
-        message: 'Email is not registered!'
-      })
+      return next(new BadRequestError('Email is not registered!'))
     }
 
     if (
       user.resetPasswordCode === '' ||
       user.resetPasswordCode !== resetPasswordCode
     ) {
-      return res.status(422).json({
-        success: false,
-        message: 'Invalid Reset code!'
-      })
+      return next(new BadRequestError('Invalid Reset code!'))
     }
 
     if (user.resetPasswordCodeExpiresAt < Date.now()) {
-      return res.status(422).json({
-        success: false,
-        message: 'Reset code is expired!'
-      })
+      return next(new BadRequestError('Reset code is expired!'))
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10)

@@ -3,11 +3,11 @@ import cors from 'cors'
 import 'dotenv/config'
 import express, { Request, Response } from 'express'
 import 'express-async-errors'
+import { loadAndValidateConfig } from './config/environmentTokens'
 import connectDB from './config/mongodb'
 import { errorHandler } from './middlewares/errorHandler'
 import authRouter from './routes/authRoutes'
-
-import { loadAndValidateConfig } from './config/environmentTokens'
+import userRouter from './routes/userRoutes'
 
 loadAndValidateConfig()
 
@@ -32,6 +32,7 @@ app.get('/', (req: Request, res: Response): any =>
 )
 
 app.use('/api/auth', authRouter)
+app.use('/api/user', userRouter)
 
 app.all('*', (req, res, next) => {
   next(new Error(`Can't find ${req.originalUrl} on this server!`))

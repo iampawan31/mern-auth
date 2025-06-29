@@ -1,12 +1,14 @@
 import nodemailer from 'nodemailer'
-import environmentConfig from './environmentTokens'
+import environmentMailConfig, { loadAndValidateMailConfig } from './mailConfig'
+
+loadAndValidateMailConfig()
 
 const transporter = nodemailer.createTransport({
-  host: environmentConfig.smtpHost,
-  port: environmentConfig.smtpPort,
+  host: environmentMailConfig.smtpHost,
+  port: environmentMailConfig.smtpPort,
   auth: {
-    user: environmentConfig.smtpUser,
-    pass: environmentConfig.smtpPassword
+    user: environmentMailConfig.smtpUser,
+    pass: environmentMailConfig.smtpPassword
   }
 })
 
