@@ -16,6 +16,7 @@ export const errorHandler = (
 
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
+      success: false,
       status: err.status,
       message: err.message,
       ...(process.env.NODE_ENV === 'local' && { stack: err.stack }),
@@ -23,6 +24,7 @@ export const errorHandler = (
     })
   } else {
     return res.status(500).json({
+      success: false,
       status: 'error',
       message: 'Something went wrong!',
       ...(process.env.NODE_ENV === 'local' && { stack: err.stack })

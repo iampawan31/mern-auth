@@ -15,16 +15,14 @@ const app: express.Express = express()
 
 const port = process.env.PORT || 4000
 
+const allowedOrigins = '*'
+
 connectDB()
 
 app.use(express.json())
 
 app.use(cookieParser())
-app.use(
-  cors({
-    credentials: true
-  })
-)
+app.use(cors({ origin: allowedOrigins, credentials: true }))
 
 // API Endpoints
 app.get('/', (req: Request, res: Response): any =>
